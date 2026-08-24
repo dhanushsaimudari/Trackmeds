@@ -212,12 +212,12 @@ def seed_database(db: Session = None):
     print("[INFO] Generating 90 days of consumption history...")
     for day_offset in range(90, 0, -1):
         hist_date = today - datetime.timedelta(days=day_offset)
-        for fac in facilities[:20]:  # Seed core facilities with detailed daily logs
+        for fac in facilities:  # Seed all facilities across all 5 BRICS countries with detailed daily logs
             for med in medicines[:6]:
                 # Base usage + random variance
                 base_used = random.randint(25, 65)
-                # Elevate usage for Maharashtra facilities during monsoon period
-                if fac.district in ["Maharashtra", "Guangdong", "São Paulo", "Moscow Oblast"] and med.id in ["MED-ORS", "MED-AMX"]:
+                # Elevate usage for facilities during climate/monsoon shock periods
+                if fac.district in ["Maharashtra", "Guangdong", "Gauteng", "São Paulo", "Moscow Oblast"] and med.id in ["MED-ORS", "MED-AMX"]:
                     base_used = int(base_used * 1.45)
 
                 db.add(Consumption(
@@ -278,10 +278,10 @@ def seed_database(db: Session = None):
             "id": "SIG-ZA-01",
             "region": "Gauteng",
             "country": "South Africa",
-            "signal_type": "Dry Season Dust Storm",
-            "severity": "Moderate",
-            "observed_value": "14°C, 22% Humidity, Dust Warning",
-            "forecast_value": "Respiratory infection surge. Salbutamol inhaler reserve buffer needed",
+            "signal_type": "Dry Season Dust & Respiratory Wave",
+            "severity": "High",
+            "observed_value": "14°C, 22% Humidity, Dust Storm Warning",
+            "forecast_value": "+40% surge in respiratory infections & rehydration demand projected",
             "source": "South African Weather Service"
         },
         # Brazil

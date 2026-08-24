@@ -48,14 +48,21 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
   const loadOverviewData = async () => {
     setIsLoading(true);
     try {
-      const [sumRes, facRes, trendRes] = await Promise.all([
+      const [sumRes, facRes] = await Promise.all([
         api.getDashboardSummary(country, region),
-        api.getFacilities(country, region),
-        api.getDemandTrend('FAC-IN-101', 'MED-ORS')
+        api.getFacilities(country, region)
       ]);
       setSummary(sumRes);
       setFacilities(facRes);
-      if (facRes.length > 0) setSelectedFacility(facRes[0]);
+      
+      const targetFacId = facRes.length > 0 ? facRes[0].id : 'FAC-IN-101';
+      const trendRes = await api.getDemandTrend(targetFacId, 'MED-ORS');
+      
+      if (facRes.length > 0) {
+        setSelectedFacility(facRes[0]);
+      } else {
+        setSelectedFacility(null);
+      }
       setTrendData({ historical: trendRes.historical, forecast: trendRes.forecast });
     } catch (e) {
       console.error('Error loading overview data:', e);

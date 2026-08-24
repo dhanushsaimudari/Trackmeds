@@ -58,9 +58,12 @@ def get_dashboard_summary(
         sig_query = sig_query.filter(ExternalSignal.region == region)
 
     active_sig = sig_query.filter(ExternalSignal.severity.in_(["High", "Extreme"])).first()
-    demand_anomalies = sig_query.filter(ExternalSignal.severity.in_(["High", "Extreme"])).count()
+    if active_sig is None and country != "All":
+        active_sig = sig_query.first()
+
+    demand_anomalies = sig_query.count()
     if demand_anomalies == 0:
-        demand_anomalies = 3
+        demand_anomalies = 1
 
     climate_severity = active_sig.severity if active_sig else "Low"
 
@@ -93,7 +96,7 @@ def get_dashboard_summary(
         doctors_req=d_req,
         doctors_avail=d_avail,
         nurses_req=n_req,
-        nurses_avail=n_avail,
+        nurses_avail=d_avail,
         support_req=s_req,
         support_avail=s_avail,
         climate_risk_severity=climate_severity
@@ -113,15 +116,26 @@ def get_dashboard_summary(
 
     if active_sig or stockout_risks >= 3 or occ_pct >= 88.0:
         shock_detected = True
+        
+        fallback_region = region if region != "All" else (facilities[0].district if facilities else "Gauteng")
+        fallback_country = country if country != "All" else (facilities[0].country if facilities else "South Africa")
+
+        shock_region = active_sig.region if active_sig else fallback_region
+        shock_country = active_sig.country if active_sig else fallback_country
+        shock_type = active_sig.signal_type if active_sig else "Regional Health Supply Shock"
+        shock_cause = active_sig.observed_value if active_sig else "High demand surge & bed occupancy pressure"
+        
+        rec_action = f"Execute immediate stock redistribution from regional surplus hubs in {shock_region}, {shock_country} before submitting emergency purchase requisition."
+
         shock_details = {
-            "title": f"HEALTH SUPPLY SHOCK: {active_sig.signal_type if active_sig else 'Monsoon Flood Shock'}",
-            "region": active_sig.region if active_sig else "Maharashtra",
-            "country": active_sig.country if active_sig else "India",
+            "title": f"HEALTH SUPPLY SHOCK: {shock_type}",
+            "region": shock_region,
+            "country": shock_country,
             "severity": "CRITICAL",
             "affected_facilities_count": max(stockout_risks + 2, 4),
             "projected_duration": "14 Days",
-            "observed_cause": active_sig.observed_value if active_sig else "310 mm rainfall in 24h & 89% bed occupancy surge",
-            "recommended_action": "Execute immediate stock redistribution from Satara CHC surplus before submitting emergency purchase requisition."
+            "observed_cause": shock_cause,
+            "recommended_action": rec_action
         }
 
     return DashboardSummaryResponse(
