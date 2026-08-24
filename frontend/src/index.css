@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-900 text-slate-100 min-h-screen;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+}
+
+/* Glassmorphism Components */
+.glass-card {
+  @apply bg-slate-800/60 backdrop-blur-md border border-slate-700/50 rounded-xl shadow-lg transition-all duration-200 hover:border-slate-600/70;
+}
+
+.glass-panel {
+  @apply bg-slate-900/80 backdrop-blur-lg border border-slate-800/80 rounded-xl shadow-xl;
+}
+
+.glass-pill {
+  @apply bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-full px-3 py-1 text-xs font-medium;
+}
+
+.glass-glow-emerald {
+  box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.25);
+}
+
+.glass-glow-rose {
+  box-shadow: 0 0 20px -5px rgba(239, 68, 68, 0.3);
+}
+
+.glass-glow-brand {
+  box-shadow: 0 0 20px -5px rgba(14, 165, 233, 0.3);
+}
+
+/* Leaflet Dark Popup Styles Override */
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  background: #171F33 !important;
+  color: #F1F5F9 !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+.leaflet-container {
+  background: #0B1326 !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B1326;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E2842;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #283452;
+}
