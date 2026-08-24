@@ -3,6 +3,7 @@ import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { Country, UserRole, Language } from '../../types';
 import { AICopilotModal } from '../copilot/AICopilotModal';
+import { BackendStatusToast } from '../common/BackendStatusToast';
 
 interface LayoutProps {
   children: (props: {
@@ -71,6 +72,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         onClose={() => setIsCopilotOpen(false)}
         country={country}
       />
+
+      <BackendStatusToast />
     </div>
   );
 };

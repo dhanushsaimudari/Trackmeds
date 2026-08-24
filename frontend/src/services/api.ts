@@ -10,7 +10,16 @@ import {
   ScenarioResponse
 } from '../types';
 
-const API_BASE = '/api';
+const getApiBase = (): string => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl && envUrl.trim() !== '') {
+    const cleanUrl = envUrl.trim().replace(/\/+$/, '');
+    return cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
+  }
+  return '/api';
+};
+
+const API_BASE = getApiBase();
 
 export const api = {
   async getDashboardSummary(country = 'India', region = 'All'): Promise<DashboardSummary> {

@@ -175,12 +175,20 @@ npm run dev
 ```
 > 🌐 **Application UI**: Open your browser at `http://localhost:3000/`
 
-### 4. 🌐 One-Command Vercel Deployment
-To deploy the entire TRACKMEDS app (React Frontend + FastAPI Serverless Backend) to Vercel in a single command:
-```bash
-git add . && git commit -m "deploy: update vercel configuration & seeded database" && git push origin main
-```
-> Then open [Vercel Dashboard](https://vercel.com/new), select your repo, and click **Deploy**.
+### 4. 🌐 Deployment Guide (Vercel Frontend + Render Backend)
+
+#### **Backend Deployment (Render)**
+1. Deploy `backend/` on [Render.com](https://render.com/) as a **Web Service** (`Python 3`).
+2. Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+3. Copy your Render API URL (e.g. `https://trackmeds-api.onrender.com`).
+
+#### **Frontend Deployment (Vercel)**
+1. Import repository to [Vercel.com](https://vercel.com/new). Select `frontend/` as Root Directory.
+2. In Environment Variables, set:
+   - `VITE_API_BASE_URL` = `https://trackmeds-api.onrender.com`
+3. Click **Deploy**!
+
+> 💡 *Note: The app includes a **Backend Connection Toast Notification** that displays `"Fetching Backend Server..."` and notifies judges `"Fetched Successfully!"` once Render completes its initial spin-up.*
 
 ---
 
