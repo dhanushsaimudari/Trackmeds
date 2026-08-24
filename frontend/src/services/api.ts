@@ -11,7 +11,8 @@ import {
 } from '../types';
 
 const getApiBase = (): string => {
-  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  const env = (import.meta as any).env;
+  const envUrl = env?.VITE_API_BASE_URL;
   if (envUrl && envUrl.trim() !== '') {
     const cleanUrl = envUrl.trim().replace(/\/+$/, '');
     return cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
