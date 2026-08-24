@@ -175,6 +175,13 @@ npm run dev
 ```
 > 🌐 **Application UI**: Open your browser at `http://localhost:3000/`
 
+### 4. 🌐 One-Command Vercel Deployment
+To deploy the entire TRACKMEDS app (React Frontend + FastAPI Serverless Backend) to Vercel in a single command:
+```bash
+git add . && git commit -m "deploy: update vercel configuration & seeded database" && git push origin main
+```
+> Then open [Vercel Dashboard](https://vercel.com/new), select your repo, and click **Deploy**.
+
 ---
 
 ## 🧪 3-Minute Hackathon Demo Walkthrough for Judges
