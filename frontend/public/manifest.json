@@ -1,0 +1,19 @@
+{
+  "short_name": "TrackMeds",
+  "name": "TrackMeds — AI Health Supply Chain Resilience",
+  "description": "Federated AI Health Supply Chain Platform for Primary Health Centres (PHCs), District Warehouses, and ABDM Integration",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0F172A",
+  "background_color": "#0F172A",
+  "categories": ["medical", "health", "productivity"],
+  "icons": [
+    {
+      "src": "/trackmeds_logo.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

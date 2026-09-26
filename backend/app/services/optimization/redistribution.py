@@ -125,7 +125,7 @@ class RedistributionOptimizer:
                     f"Estimated expiry waste avoided: ₹{val:,.2f}."
                 )
 
-                rec_id = f"RD-{src.id[:4]}-{dest_facility.id[:4]}-{med.id[:3]}"
+                rec_id = f"RD-{src.id}-{dest_facility.id}-{med.id}"
                 
                 # Check if recommendation already exists in DB
                 existing_rd = db.query(Redistribution).filter(Redistribution.id == rec_id).first()

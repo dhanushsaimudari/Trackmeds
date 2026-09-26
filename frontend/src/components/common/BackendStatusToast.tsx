@@ -9,19 +9,16 @@ export const BackendStatusToast: React.FC = () => {
   const checkConnection = async () => {
     setStatus('fetching');
     try {
-      // Ping health endpoint or summary endpoint
-      await api.getDashboardSummary('India', 'All');
+      await api.pingBackendHealth();
       setStatus('connected');
-      // Auto-hide success badge after 4.5 seconds
       setTimeout(() => {
         setVisible(false);
       }, 4500);
     } catch (err) {
       console.warn('Backend connection pending/waking up:', err);
-      // Retry once after 3 seconds in case server is spinning up
       setTimeout(async () => {
         try {
-          await api.getDashboardSummary('India', 'All');
+          await api.pingBackendHealth();
           setStatus('connected');
           setTimeout(() => setVisible(false), 4500);
         } catch {
@@ -46,11 +43,11 @@ export const BackendStatusToast: React.FC = () => {
           </div>
           <div className="flex-1 text-xs">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-amber-200">Fetching Backend Server...</span>
+              <span className="font-bold text-amber-200">Connecting to Network...</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">CONNECTING</span>
             </div>
             <p className="mt-1 text-[11px] text-amber-200/80 leading-relaxed">
-              Waking up Render API server... (may take ~30s on initial cold start).
+              Starting secure connection to health database...
             </p>
           </div>
         </div>
@@ -63,16 +60,16 @@ export const BackendStatusToast: React.FC = () => {
           </div>
           <div className="flex-1 text-xs">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-emerald-200">Fetched Successfully!</span>
+              <span className="font-bold text-emerald-200">Connected Successfully!</span>
               <button
                 onClick={() => setVisible(false)}
-                className="text-emerald-400 hover:text-white"
+                className="text-emerald-400 hover:text-white cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
             <p className="mt-1 text-[11px] text-emerald-200/80">
-              Render FastAPI backend engine is connected & operational.
+              System is online and operational.
             </p>
           </div>
         </div>
@@ -85,16 +82,16 @@ export const BackendStatusToast: React.FC = () => {
           </div>
           <div className="flex-1 text-xs">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-rose-200">Backend Server Waking Up...</span>
+              <span className="font-bold text-rose-200">Server Starting Up...</span>
               <button
                 onClick={() => setVisible(false)}
-                className="text-rose-400 hover:text-white"
+                className="text-rose-400 hover:text-white cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
             <p className="mt-1 text-[11px] text-rose-200/80 leading-relaxed">
-              Render backend is initializing. Click retry once server completes spin-up.
+              System server is initializing. Click retry to reconnect.
             </p>
             <button
               onClick={checkConnection}

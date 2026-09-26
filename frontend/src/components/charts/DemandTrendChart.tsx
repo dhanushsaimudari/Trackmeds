@@ -16,13 +16,15 @@ interface DemandTrendChartProps {
 }
 
 export const DemandTrendChart: React.FC<DemandTrendChartProps> = ({
-  historicalData,
-  forecastData
+  historicalData = [],
+  forecastData = []
 }) => {
+  const hist = historicalData || [];
+  const fore = forecastData || [];
   // Combine historical and forecast data with distinct keys
   const combined = [
-    ...historicalData.map(d => ({ date: d.date.slice(5), Historical: d.demand, Forecast: null })),
-    ...forecastData.map(d => ({ date: d.date.slice(5), Historical: null, Forecast: d.demand }))
+    ...hist.map(d => ({ date: (d.date || '').slice(5), Historical: d.demand, Forecast: null })),
+    ...fore.map(d => ({ date: (d.date || '').slice(5), Historical: null, Forecast: d.demand }))
   ];
 
   return (

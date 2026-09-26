@@ -8,46 +8,65 @@ from app.services.resilience import FacilityResilienceEngine
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
+from app.core.security import get_current_user, apply_rbac_facility_filter, User
+
 @router.get("/summary", response_model=DashboardSummaryResponse)
 def get_dashboard_summary(
     country: str = Query(default="India"),
     region: str = Query(default="All"),
-    db: Session = Depends(get_db)
+    state: str = Query(default="All"),
+    district: str = Query(default="All"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     today = datetime.date.today()
 
-    # 1. Facilities Monitored
+    # Determine effective state and district filters
+    eff_state = state if state != "All" else (region if region not in ["All", "India"] else "All")
+    eff_district = district
+
+    # 1. Facilities Monitored (RBAC Scoped)
     fac_query = db.query(Facility)
     if country != "All":
         fac_query = fac_query.filter(Facility.country == country)
-    if region != "All":
-        fac_query = fac_query.filter(Facility.district == region)
+    if eff_state != "All":
+        fac_query = fac_query.filter(Facility.state == eff_state)
+    if eff_district != "All":
+        fac_query = fac_query.filter(Facility.district == eff_district)
     
+    fac_query = apply_rbac_facility_filter(fac_query, current_user, Facility)
     facilities = fac_query.all()
     facilities_monitored = len(facilities)
 
     # 2. Medicines Tracked
     medicines_tracked = db.query(Medicine).count()
 
-    # 3. Stockout Risks
+    # 3. Stockout Risks (RBAC Scoped)
     fc_query = db.query(Forecast).join(Facility)
     if country != "All":
         fc_query = fc_query.filter(Facility.country == country)
-    if region != "All":
-        fc_query = fc_query.filter(Facility.district == region)
+    if eff_state != "All":
+        fc_query = fc_query.filter(Facility.state == eff_state)
+    if eff_district != "All":
+        fc_query = fc_query.filter(Facility.district == eff_district)
 
+    fc_query = apply_rbac_facility_filter(fc_query, current_user, Facility)
     stockout_risks = fc_query.filter(Forecast.risk_level.in_(["Critical", "High"])).count()
 
-    # 4. Expiry Risks
+    # 4. Expiry Risks (RBAC Scoped)
     inv_query = db.query(Inventory).join(Facility).filter(
         Inventory.quantity > 0,
         Inventory.expiry_date <= (today + datetime.timedelta(days=45))
     )
     if country != "All":
         inv_query = inv_query.filter(Facility.country == country)
-    if region != "All":
-        inv_query = inv_query.filter(Facility.district == region)
+    if eff_state != "All":
+        inv_query = inv_query.filter(Facility.state == eff_state)
+    if eff_district != "All":
+        inv_query = inv_query.filter(Facility.district == eff_district)
 
+
+    inv_query = apply_rbac_facility_filter(inv_query, current_user, Facility)
     expiry_risks = inv_query.count()
 
     # 5. Demand Anomalies
@@ -87,7 +106,7 @@ def get_dashboard_summary(
     staffing_pct = round((tot_staff_avail / tot_staff_req) * 100.0, 1)
     staff_risk = "CRITICAL" if staffing_pct < 70.0 else ("WARNING" if staffing_pct <= 85.0 else "HEALTHY")
 
-    # 8. Integrated Regional Resilience Score Calculation
+    # 8. Integrated Regional Resilience Score Calculation (Bugfix: nurses_avail=n_avail)
     res_data = FacilityResilienceEngine.calculate_facility_resilience(
         critical_meds_count=stockout_risks,
         total_meds_monitored=12,
@@ -96,7 +115,7 @@ def get_dashboard_summary(
         doctors_req=d_req,
         doctors_avail=d_avail,
         nurses_req=n_req,
-        nurses_avail=d_avail,
+        nurses_avail=n_avail,
         support_req=s_req,
         support_avail=s_avail,
         climate_risk_severity=climate_severity
@@ -104,8 +123,27 @@ def get_dashboard_summary(
 
     resilience_score = res_data["overall_score"]
 
-    # 9. Waste Avoided Value
+    # 9. Waste Avoided Value (Scoped)
     rd_query = db.query(Redistribution)
+    if current_user.role == "STATE_OFFICER" and current_user.state:
+        from app.models.all_models import Facility as FModel
+        sub_facs = db.query(FModel.id).filter(FModel.state == current_user.state).subquery()
+        rd_query = rd_query.filter(
+            (Redistribution.source_facility_id.in_(sub_facs)) |
+            (Redistribution.destination_facility_id.in_(sub_facs))
+        )
+    elif current_user.role == "DISTRICT_OFFICER" and current_user.district:
+        from app.models.all_models import Facility as FModel
+        sub_facs = db.query(FModel.id).filter(FModel.district == current_user.district).subquery()
+        rd_query = rd_query.filter(
+            (Redistribution.source_facility_id.in_(sub_facs)) |
+            (Redistribution.destination_facility_id.in_(sub_facs))
+        )
+    elif current_user.role == "PHC_STAFF" and current_user.facility_id:
+        rd_query = rd_query.filter(
+            (Redistribution.source_facility_id == current_user.facility_id) |
+            (Redistribution.destination_facility_id == current_user.facility_id)
+        )
     total_waste_avoided = sum(
         rd.quantity * 15.0 for rd in rd_query.all()
     ) if rd_query.count() > 0 else 48000.0
@@ -117,8 +155,8 @@ def get_dashboard_summary(
     if active_sig or stockout_risks >= 3 or occ_pct >= 88.0:
         shock_detected = True
         
-        fallback_region = region if region != "All" else (facilities[0].district if facilities else "Gauteng")
-        fallback_country = country if country != "All" else (facilities[0].country if facilities else "South Africa")
+        fallback_region = region if region != "All" else (facilities[0].district if facilities else "Pune")
+        fallback_country = country if country != "All" else (facilities[0].country if facilities else "India")
 
         shock_region = active_sig.region if active_sig else fallback_region
         shock_country = active_sig.country if active_sig else fallback_country
@@ -137,6 +175,11 @@ def get_dashboard_summary(
             "observed_cause": shock_cause,
             "recommended_action": rec_action
         }
+
+    # Footfall aggregates
+    total_footfall = sum(f.daily_footfall or 100 for f in facilities)
+    total_base_footfall = sum(f.baseline_footfall or 100 for f in facilities)
+    avg_surge_pct = round(((total_footfall - total_base_footfall) / max(1.0, float(total_base_footfall))) * 100.0, 1)
 
     return DashboardSummaryResponse(
         facilities_monitored=facilities_monitored,
@@ -165,6 +208,10 @@ def get_dashboard_summary(
         total_nurses_required=n_req,
         regional_staffing_pct=staffing_pct,
         staff_risk_summary=staff_risk,
+
+        # Patient Footfall Aggregation
+        total_daily_footfall=total_footfall,
+        average_footfall_surge_pct=avg_surge_pct,
 
         resilience_breakdown_summary=res_data["components"]
     )

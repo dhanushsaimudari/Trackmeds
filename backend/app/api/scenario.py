@@ -4,17 +4,22 @@ from app.database import get_db
 from app.models.all_models import Facility, Forecast, Inventory
 from app.schemas.all_schemas import ScenarioSimulateRequest, ScenarioSimulateResponse
 
+from app.core.security import get_current_user, apply_rbac_facility_filter, User
+
 router = APIRouter(prefix="/scenario", tags=["Scenario Simulator"])
 
 @router.post("/simulate", response_model=ScenarioSimulateResponse)
 def simulate_emergency_scenario(
     req: ScenarioSimulateRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     country = req.country or "India"
 
-    # Base facility count for target country
-    facilities = db.query(Facility).filter(Facility.country == country).all()
+    # Base facility count for target country (RBAC Scoped)
+    query = db.query(Facility).filter(Facility.country == country)
+    query = apply_rbac_facility_filter(query, current_user, Facility)
+    facilities = query.all()
     total_facs = len(facilities) or 8
 
     # Calculate baseline vs elevated demand factor

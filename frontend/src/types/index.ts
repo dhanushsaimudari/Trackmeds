@@ -1,6 +1,35 @@
-export type Country = 'India' | 'Brazil' | 'South Africa' | 'China' | 'Russia' | 'All';
-export type UserRole = 'National Admin' | 'District Officer' | 'PHC Manager';
+export type Country = 'India' | 'All' | string;
+export type UserRole = 'NATIONAL_ADMIN' | 'STATE_OFFICER' | 'DISTRICT_OFFICER' | 'PHC_STAFF' | 'SUPPLIER' | 'National Admin' | 'District Officer' | 'PHC Manager';
 export type Language = 'en' | 'hi';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  state?: string;
+  district?: string;
+  facility_id?: string;
+  supplier_id?: string;
+  approval_status?: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+}
+
+export interface ReplenishmentItem {
+  id: string;
+  facility_id: string;
+  facility_name?: string;
+  medicine_id: string;
+  medicine_name?: string;
+  quantity_required: number;
+  urgency: 'Low' | 'Medium' | 'High' | 'Critical';
+  expected_stockout_date?: string;
+  recommended_supplier_id?: string;
+  recommended_supplier_name?: string;
+  status: 'Recommended' | 'Approved' | 'Ordered' | 'Fulfilled';
+  reason: string;
+  created_at: string;
+}
 
 export interface DashboardSummary {
   facilities_monitored: number;
@@ -34,6 +63,8 @@ export interface DashboardSummary {
   total_nurses_required?: number;
   regional_staffing_pct?: number;
   staff_risk_summary?: 'HEALTHY' | 'WARNING' | 'CRITICAL';
+  total_daily_footfall?: number;
+  average_footfall_surge_pct?: number;
   resilience_breakdown_summary?: Record<string, number>;
 }
 
@@ -41,6 +72,7 @@ export interface Facility {
   id: string;
   name: string;
   type: string;
+  state?: string;
   district: string;
   country: string;
   latitude: number;
@@ -65,6 +97,9 @@ export interface Facility {
   support_available: number;
   staffing_percentage: number;
   staff_risk_status: 'HEALTHY' | 'WARNING' | 'CRITICAL';
+  daily_footfall?: number;
+  baseline_footfall?: number;
+  footfall_surge_pct?: number;
   resilience_score: number;
   resilience_breakdown?: Record<string, number>;
   main_factors?: string[];
@@ -112,6 +147,7 @@ export interface ForecastItem {
   stockout_probability: number;
   confidence: number;
   risk_level: 'Low' | 'Medium' | 'High' | 'Critical';
+  risk_reason?: string;
   generated_at: string;
 }
 
@@ -180,3 +216,73 @@ export interface ScenarioResponse {
     status_after: string;
   }>;
 }
+
+export interface FederatedNodeStatus {
+  id: string;
+  node_name: string;
+  region: string;
+  country: string;
+  local_samples_count: number;
+  local_accuracy: number;
+  last_contribution_round: number;
+  status: string;
+  last_sync: string | null;
+}
+
+export interface FederatedRoundLog {
+  round_number: number;
+  global_model_version: string;
+  participating_nodes_count: number;
+  samples_aggregated: number;
+  training_loss: number;
+  validation_mae: number;
+  epsilon_privacy_spent: number;
+  created_at: string | null;
+}
+
+export interface FederatedTelemetry {
+  architecture: string;
+  coordination_topology: string;
+  privacy_standard: string;
+  current_round: number;
+  global_model_version: string;
+  global_weights: Record<string, number>;
+  participating_states_count: number;
+  total_samples_trained: number;
+  rounds_history: FederatedRoundLog[];
+  nodes: FederatedNodeStatus[];
+}
+
+export interface DonorFacilityMatch {
+  facility_id: string;
+  facility_name: string;
+  district: string;
+  state: string;
+  available_stock: number;
+  distance_km: number;
+  eta_minutes: number;
+  contact_phone?: string;
+}
+
+export interface EmergencySOSRequest {
+  id: string;
+  requesting_facility_id: string;
+  requesting_facility_name: string;
+  requesting_state?: string;
+  requesting_district?: string;
+  item_name: string;
+  quantity_needed: number;
+  urgency: 'CRITICAL_SOS' | 'HIGH' | 'MASS_CASUALTY';
+  incident_description: string;
+  status: 'OPEN_BROADCAST' | 'MATCHED' | 'ACCEPTED' | 'IN_TRANSIT' | 'FULFILLED' | 'CANCELLED';
+  accepting_facility_id?: string;
+  accepting_facility_name?: string;
+  quantity_fulfilled?: number;
+  distance_km?: number;
+  eta_minutes?: number;
+  created_at: string;
+  resolved_at?: string;
+  matched_donors?: DonorFacilityMatch[];
+}
+
+

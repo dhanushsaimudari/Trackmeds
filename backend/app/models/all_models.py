@@ -3,12 +3,16 @@ from sqlalchemy import Column, String, Integer, Float, DateTime, Date, ForeignKe
 from sqlalchemy.orm import relationship
 from app.database import Base
 
+def utcnow():
+    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+
 class Facility(Base):
     __tablename__ = "facilities"
 
     id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False, index=True)
     type = Column(String, nullable=False)  # PHC, CHC, District Hospital, Warehouse
+    state = Column(String, nullable=False, index=True)  # Maharashtra, Kerala, Gujarat, etc.
     district = Column(String, nullable=False, index=True)
     country = Column(String, nullable=False, index=True)  # India, Brazil, South Africa
     latitude = Column(Float, nullable=False)
@@ -22,7 +26,12 @@ class Facility(Base):
     occupied_beds = Column(Integer, default=35)
     emergency_beds = Column(Integer, default=10)
     icu_beds = Column(Integer, default=8)
-    last_beds_updated = Column(DateTime, default=datetime.datetime.utcnow)
+    last_beds_updated = Column(DateTime, default=utcnow)
+
+    # --- Patient Footfall Telemetry System ---
+    daily_footfall = Column(Integer, default=120)
+    baseline_footfall = Column(Integer, default=100)
+    last_footfall_updated = Column(DateTime, default=utcnow)
 
     # --- Medical Personnel Availability System ---
     doctors_required = Column(Integer, default=8)
@@ -31,11 +40,13 @@ class Facility(Base):
     nurses_available = Column(Integer, default=18)
     support_required = Column(Integer, default=15)
     support_available = Column(Integer, default=14)
-    last_staff_updated = Column(DateTime, default=datetime.datetime.utcnow)
+    last_staff_updated = Column(DateTime, default=utcnow)
 
     inventories = relationship("Inventory", back_populates="facility", cascade="all, delete-orphan")
     consumptions = relationship("Consumption", back_populates="facility", cascade="all, delete-orphan")
     forecasts = relationship("Forecast", back_populates="facility", cascade="all, delete-orphan")
+    users = relationship("User", back_populates="facility")
+    replenishments = relationship("Replenishment", back_populates="facility", cascade="all, delete-orphan")
 
 
 class Medicine(Base):
@@ -53,6 +64,7 @@ class Medicine(Base):
     inventories = relationship("Inventory", back_populates="medicine", cascade="all, delete-orphan")
     consumptions = relationship("Consumption", back_populates="medicine", cascade="all, delete-orphan")
     forecasts = relationship("Forecast", back_populates="medicine", cascade="all, delete-orphan")
+    replenishments = relationship("Replenishment", back_populates="medicine", cascade="all, delete-orphan")
 
 
 class Inventory(Base):
@@ -64,7 +76,7 @@ class Inventory(Base):
     batch_number = Column(String, nullable=False)
     quantity = Column(Integer, nullable=False, default=0)
     expiry_date = Column(Date, nullable=False, index=True)
-    last_updated = Column(DateTime, default=datetime.datetime.utcnow)
+    last_updated = Column(DateTime, default=utcnow)
 
     facility = relationship("Facility", back_populates="inventories")
     medicine = relationship("Medicine", back_populates="inventories")
@@ -94,6 +106,8 @@ class Supplier(Base):
     contact_status = Column(String, default="Active")
 
     medicines = relationship("Medicine", back_populates="supplier")
+    users = relationship("User", back_populates="supplier")
+    replenishments = relationship("Replenishment", back_populates="recommended_supplier")
 
 
 class Forecast(Base):
@@ -107,7 +121,8 @@ class Forecast(Base):
     stockout_probability = Column(Float, default=0.0)
     confidence = Column(Float, default=0.9)
     risk_level = Column(String, default="Low")  # Low, Medium, High, Critical
-    generated_at = Column(DateTime, default=datetime.datetime.utcnow)
+    risk_reason = Column(Text, nullable=True)  # Explainable classification rationale
+    generated_at = Column(DateTime, default=utcnow)
 
     facility = relationship("Facility", back_populates="forecasts")
     medicine = relationship("Medicine", back_populates="forecasts")
@@ -124,7 +139,7 @@ class Redistribution(Base):
     distance_km = Column(Float, nullable=False)
     reason = Column(Text, nullable=False)
     status = Column(String, default="Recommended")  # Recommended, Approved, In Transit, Completed
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     source_facility = relationship("Facility", foreign_keys=[source_facility_id])
     destination_facility = relationship("Facility", foreign_keys=[destination_facility_id])
@@ -142,7 +157,7 @@ class ExternalSignal(Base):
     observed_value = Column(String, nullable=False)
     forecast_value = Column(String, nullable=False)
     source = Column(String, default="OpenWeather API")
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    timestamp = Column(DateTime, default=utcnow)
 
 
 class Notification(Base):
@@ -155,4 +170,97 @@ class Notification(Base):
     severity = Column(String, default="info")  # info, warning, critical
     facility_id = Column(String, nullable=True)
     read_status = Column(Boolean, default=False)
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    timestamp = Column(DateTime, default=utcnow)
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(String, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    name = Column(String, nullable=False)
+    role = Column(String, nullable=False)  # NATIONAL_ADMIN, STATE_OFFICER, DISTRICT_OFFICER, PHC_STAFF, SUPPLIER
+    state = Column(String, nullable=True)
+    district = Column(String, nullable=True)
+    facility_id = Column(String, ForeignKey("facilities.id"), nullable=True)
+    supplier_id = Column(String, ForeignKey("suppliers.id"), nullable=True)
+    approval_status = Column(String, default="approved")  # pending, approved, rejected
+    created_at = Column(DateTime, default=utcnow)
+
+    facility = relationship("Facility", back_populates="users")
+    supplier = relationship("Supplier", back_populates="users")
+
+
+class Replenishment(Base):
+    __tablename__ = "replenishments"
+
+    id = Column(String, primary_key=True, index=True)
+    facility_id = Column(String, ForeignKey("facilities.id"), nullable=False, index=True)
+    medicine_id = Column(String, ForeignKey("medicines.id"), nullable=False, index=True)
+    quantity_required = Column(Integer, nullable=False)
+    urgency = Column(String, default="High")  # Low, Medium, High, Critical
+    expected_stockout_date = Column(Date, nullable=True)
+    recommended_supplier_id = Column(String, ForeignKey("suppliers.id"), nullable=True)
+    status = Column(String, default="Recommended")  # Recommended, Approved, Ordered, Fulfilled
+    reason = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=utcnow)
+
+    facility = relationship("Facility", back_populates="replenishments")
+    medicine = relationship("Medicine", back_populates="replenishments")
+    recommended_supplier = relationship("Supplier", back_populates="replenishments")
+
+
+class FederatedRound(Base):
+    __tablename__ = "federated_rounds"
+
+    id = Column(String, primary_key=True, index=True)
+    round_number = Column(Integer, nullable=False, unique=True)
+    global_model_version = Column(String, nullable=False)
+    participating_nodes_count = Column(Integer, default=4)
+    samples_aggregated = Column(Integer, default=0)
+    training_loss = Column(Float, default=0.0)
+    validation_mae = Column(Float, default=0.0)
+    epsilon_privacy_spent = Column(Float, default=0.0)
+    model_weights_json = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+
+
+class FederatedNode(Base):
+    __tablename__ = "federated_nodes"
+
+    id = Column(String, primary_key=True, index=True)
+    node_name = Column(String, nullable=False)  # e.g., Maharashtra State Health AI Node
+    region = Column(String, nullable=False, index=True)  # Maharashtra, Kerala, Gujarat, Karnataka
+    country = Column(String, default="India", index=True)
+    local_samples_count = Column(Integer, default=0)
+    local_accuracy = Column(Float, default=0.92)
+    last_contribution_round = Column(Integer, default=1)
+    status = Column(String, default="Active")  # Active, Syncing, Idle
+    last_sync = Column(DateTime, default=utcnow)
+
+
+class EmergencyRequest(Base):
+    __tablename__ = "emergency_requests"
+
+    id = Column(String, primary_key=True, index=True)
+    requesting_facility_id = Column(String, ForeignKey("facilities.id"), nullable=False, index=True)
+    item_name = Column(String, nullable=False)  # e.g. Oxygen Cylinders 40L, Anti-Snake Venom, Amoxicillin 500mg
+    quantity_needed = Column(Integer, nullable=False)
+    urgency = Column(String, default="CRITICAL_SOS")  # CRITICAL_SOS, HIGH, MASS_CASUALTY
+    incident_description = Column(Text, nullable=False)
+    status = Column(String, default="OPEN_BROADCAST")  # OPEN_BROADCAST, MATCHED, ACCEPTED, IN_TRANSIT, FULFILLED, CANCELLED
+    
+    accepting_facility_id = Column(String, ForeignKey("facilities.id"), nullable=True)
+    quantity_fulfilled = Column(Integer, default=0)
+    distance_km = Column(Float, nullable=True)
+    eta_minutes = Column(Integer, nullable=True)
+    
+    created_at = Column(DateTime, default=utcnow)
+    resolved_at = Column(DateTime, nullable=True)
+
+    requesting_facility = relationship("Facility", foreign_keys=[requesting_facility_id])
+    accepting_facility = relationship("Facility", foreign_keys=[accepting_facility_id])
+
+
+

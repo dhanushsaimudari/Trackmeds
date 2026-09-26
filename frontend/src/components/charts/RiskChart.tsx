@@ -18,12 +18,13 @@ interface RiskChartProps {
   };
 }
 
-export const RiskChart: React.FC<RiskChartProps> = ({ data }) => {
+export const RiskChart: React.FC<RiskChartProps> = ({ data = { critical: 0, high: 0, medium: 0, low: 0 } }) => {
+  const d = data || { critical: 0, high: 0, medium: 0, low: 0 };
   const chartData = [
-    { category: 'Critical (< 7d)', count: data.critical, color: '#EF4444' },
-    { category: 'High (7-14d)', count: data.high, color: '#F59E0B' },
-    { category: 'Medium (14-25d)', count: data.medium, color: '#3B82F6' },
-    { category: 'Healthy (> 25d)', count: data.low, color: '#10B981' },
+    { category: 'Critical (< 7d)', count: d.critical || 0, color: '#EF4444' },
+    { category: 'High (7-14d)', count: d.high || 0, color: '#F59E0B' },
+    { category: 'Medium (14-25d)', count: d.medium || 0, color: '#3B82F6' },
+    { category: 'Healthy (> 25d)', count: d.low || 0, color: '#10B981' },
   ];
 
   return (

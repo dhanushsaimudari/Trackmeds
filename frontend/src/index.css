@@ -2,51 +2,119 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --brics-resilience: #001F5B;
+  --brics-innovation: #006CD4;
+  --brics-innovation-cyan: #00BCD4;
+  --brics-cooperation: #00897B;
+  --brics-sustainability: #2E7D32;
+  --surface-ground: #F4F7FB;
+  --surface-card: #FFFFFF;
+}
+
 @layer base {
   body {
-    @apply bg-slate-900 text-slate-100 min-h-screen;
+    @apply bg-slate-950 text-slate-100 min-h-screen font-sans antialiased transition-colors duration-200;
     background-image: 
-      radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.08) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+      radial-gradient(at 0% 0%, rgba(0, 31, 91, 0.25) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(0, 108, 212, 0.12) 0px, transparent 50%),
+      radial-gradient(at 50% 100%, rgba(46, 125, 50, 0.08) 0px, transparent 50%);
     background-attachment: fixed;
+  }
+
+  html.light body {
+    @apply bg-[#F4F7FB] text-slate-900;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(0, 108, 212, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(0, 137, 123, 0.05) 0px, transparent 50%),
+      radial-gradient(at 50% 100%, rgba(46, 125, 50, 0.04) 0px, transparent 50%);
+  }
+
+  ::selection {
+    background-color: rgba(14, 165, 233, 0.3);
+    color: #7dd3fc;
+  }
+
+  html.light ::selection {
+    background-color: rgba(14, 165, 233, 0.25);
+    color: #0369a1;
+  }
+
+  /* Accessibility Visible Focus Ring */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-brand-400/80 ring-offset-2 ring-offset-slate-950;
+  }
+
+  html.light *:focus-visible {
+    @apply ring-offset-white;
   }
 }
 
 /* Glassmorphism Components */
 .glass-card {
-  @apply bg-slate-800/60 backdrop-blur-md border border-slate-700/50 rounded-xl shadow-lg transition-all duration-200 hover:border-slate-600/70;
+  @apply bg-slate-900/70 backdrop-blur-md border border-slate-800/80 rounded-xl shadow-lg transition-all duration-200 hover:border-slate-700/80 hover:shadow-xl hover:-translate-y-0.5;
+}
+
+html.light .glass-card {
+  @apply bg-white/80 border-slate-200/90 shadow-sm hover:border-slate-300 hover:shadow-md;
 }
 
 .glass-panel {
-  @apply bg-slate-900/80 backdrop-blur-lg border border-slate-800/80 rounded-xl shadow-xl;
+  @apply bg-slate-900/85 backdrop-blur-lg border border-slate-800/80 rounded-xl shadow-2xl;
+}
+
+html.light .glass-panel {
+  @apply bg-white/90 border-slate-200 shadow-xl;
 }
 
 .glass-pill {
-  @apply bg-slate-800/80 backdrop-blur-sm border border-slate-700/50 rounded-full px-3 py-1 text-xs font-medium;
+  @apply bg-slate-800/80 backdrop-blur-sm border border-slate-700/60 rounded-full px-3 py-1 text-xs font-semibold;
+}
+
+html.light .glass-pill {
+  @apply bg-slate-100 border-slate-300 text-slate-700;
 }
 
 .glass-glow-emerald {
-  box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 24px -4px rgba(16, 185, 129, 0.22);
 }
 
 .glass-glow-rose {
-  box-shadow: 0 0 20px -5px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 24px -4px rgba(239, 68, 68, 0.28);
 }
 
 .glass-glow-brand {
-  box-shadow: 0 0 20px -5px rgba(14, 165, 233, 0.3);
+  box-shadow: 0 0 24px -4px rgba(14, 165, 233, 0.28);
+}
+
+.glass-glow-amber {
+  box-shadow: 0 0 24px -4px rgba(245, 158, 11, 0.25);
+}
+
+/* Bento Box Grid Utilities */
+.bento-card {
+  @apply glass-card p-5 flex flex-col justify-between relative overflow-hidden;
+}
+
+.bento-card-header {
+  @apply flex items-center justify-between gap-2 border-b border-slate-800/70 pb-3 mb-3;
+}
+
+html.light .bento-card-header {
+  @apply border-slate-200;
 }
 
 /* Leaflet Dark Popup Styles Override */
 .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-  background: #171F33 !important;
+  background: #0B1326 !important;
   color: #F1F5F9 !important;
-  border: 1px solid rgba(148, 163, 184, 0.2) !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.7) !important;
+  border-radius: 12px !important;
 }
 
 .leaflet-container {
-  background: #0B1326 !important;
+  background: #070C18 !important;
   font-family: 'Inter', sans-serif !important;
 }
 
@@ -56,7 +124,7 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0B1326;
+  background: #070C18;
 }
 ::-webkit-scrollbar-thumb {
   background: #1E2842;
@@ -64,4 +132,14 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #283452;
+}
+
+/* Reduced Motion Override for Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import datetime
 
@@ -6,6 +6,7 @@ import datetime
 class FacilityBase(BaseModel):
     name: str
     type: str
+    state: str
     district: str
     country: str
     latitude: float
@@ -15,6 +16,8 @@ class FacilityBase(BaseModel):
     status: str
 
 class FacilityResponse(FacilityBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     stock_health_score: Optional[float] = 92.0
     critical_medicines_count: Optional[int] = 0
@@ -38,14 +41,16 @@ class FacilityResponse(FacilityBase):
     staffing_percentage: float = 91.1
     staff_risk_status: str = "HEALTHY"
 
+    # Patient Footfall Telemetry System
+    daily_footfall: int = 120
+    baseline_footfall: int = 100
+    footfall_surge_pct: float = 0.0
+
     # Integrated Deterministic Resilience
     resilience_score: float = 88.5
     resilience_breakdown: Optional[dict] = None
     main_factors: List[str] = []
     last_updated: Optional[datetime.datetime] = None
-
-    class Config:
-        from_attributes = True
 
 class FacilityBedsUpdate(BaseModel):
     occupied_beds: int = Field(ge=0)
@@ -72,14 +77,14 @@ class MedicineBase(BaseModel):
     supplier_id: Optional[str] = None
 
 class MedicineResponse(MedicineBase):
+    model_config = ConfigDict(from_attributes=True)
     id: str
-
-    class Config:
-        from_attributes = True
 
 
 # --- Inventory Schemas ---
 class InventoryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     facility_id: str
     facility_name: Optional[str] = None
@@ -98,12 +103,11 @@ class InventoryResponse(BaseModel):
     risk_level: Optional[str] = "Low"
     last_updated: datetime.datetime
 
-    class Config:
-        from_attributes = True
-
 
 # --- Forecast Schemas ---
 class ForecastResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     facility_id: str
     facility_name: str
@@ -115,14 +119,14 @@ class ForecastResponse(BaseModel):
     stockout_probability: float
     confidence: float
     risk_level: str
+    risk_reason: Optional[str] = None
     generated_at: datetime.datetime
-
-    class Config:
-        from_attributes = True
 
 
 # --- Redistribution Schemas ---
 class RedistributionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     source_facility_id: str
     source_facility_name: str
@@ -139,12 +143,74 @@ class RedistributionResponse(BaseModel):
     ai_explanation: Optional[str] = None
     created_at: datetime.datetime
 
-    class Config:
-        from_attributes = True
+
+# --- Replenishment Schemas ---
+class ReplenishmentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    facility_id: str
+    facility_name: Optional[str] = None
+    medicine_id: str
+    medicine_name: Optional[str] = None
+    quantity_required: int
+    urgency: str
+    expected_stockout_date: Optional[datetime.date] = None
+    recommended_supplier_id: Optional[str] = None
+    recommended_supplier_name: Optional[str] = None
+    status: str
+    reason: str
+    created_at: datetime.datetime
+
+
+# --- User & Auth Schemas ---
+class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    email: str
+    name: str
+    role: str
+    state: Optional[str] = None
+    district: Optional[str] = None
+    facility_id: Optional[str] = None
+    supplier_id: Optional[str] = None
+    approval_status: Optional[str] = "approved"
+    created_at: datetime.datetime
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    name: str
+    requested_role: str = "PHC_STAFF"
+    state: Optional[str] = "Maharashtra"
+    district: Optional[str] = "Pune"
+    facility_id: Optional[str] = None
+    supplier_id: Optional[str] = None
+
+class FirebaseVerifyRequest(BaseModel):
+    id_token: str
+    email: Optional[str] = None
+    name: Optional[str] = None
+    requested_role: Optional[str] = None
+    state: Optional[str] = None
+    district: Optional[str] = None
+    facility_id: Optional[str] = None
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
 
 
 # --- External Signal Schemas ---
 class ExternalSignalResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     region: str
     country: str
@@ -155,12 +221,11 @@ class ExternalSignalResponse(BaseModel):
     source: str
     timestamp: datetime.datetime
 
-    class Config:
-        from_attributes = True
-
 
 # --- Supplier Schemas ---
 class SupplierResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     name: str
     region: str
@@ -168,12 +233,11 @@ class SupplierResponse(BaseModel):
     reliability_score: float
     contact_status: str
 
-    class Config:
-        from_attributes = True
-
 
 # --- Notification Schemas ---
 class NotificationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     type: str
     title: str
@@ -182,9 +246,6 @@ class NotificationResponse(BaseModel):
     facility_id: Optional[str]
     read_status: bool
     timestamp: datetime.datetime
-
-    class Config:
-        from_attributes = True
 
 
 # --- Dashboard Summary Schema ---
@@ -214,6 +275,10 @@ class DashboardSummaryResponse(BaseModel):
     total_nurses_required: int = 0
     regional_staffing_pct: float = 0.0
     staff_risk_summary: str = "HEALTHY"
+
+    # Patient Footfall Aggregation
+    total_daily_footfall: int = 0
+    average_footfall_surge_pct: float = 0.0
 
     resilience_breakdown_summary: Optional[dict] = None
 
@@ -249,3 +314,49 @@ class ScenarioSimulateResponse(BaseModel):
     confidence_score: float
     intervention_summary: str
     facilities_comparison: List[dict]
+
+
+# --- Emergency SOS Request Schemas ---
+class EmergencyRequestCreate(BaseModel):
+    requesting_facility_id: str
+    item_name: str
+    quantity_needed: int = Field(gt=0)
+    urgency: str = "CRITICAL_SOS"  # CRITICAL_SOS, HIGH, MASS_CASUALTY
+    incident_description: str
+
+class EmergencyRequestAccept(BaseModel):
+    accepting_facility_id: str
+    quantity_fulfilled: int = Field(gt=0)
+
+class DonorFacilityMatch(BaseModel):
+    facility_id: str
+    facility_name: str
+    district: str
+    state: str
+    available_stock: int
+    distance_km: float
+    eta_minutes: int
+
+class EmergencyRequestResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    requesting_facility_id: str
+    requesting_facility_name: Optional[str] = None
+    requesting_state: Optional[str] = None
+    requesting_district: Optional[str] = None
+    item_name: str
+    quantity_needed: int
+    urgency: str
+    incident_description: str
+    status: str
+    accepting_facility_id: Optional[str] = None
+    accepting_facility_name: Optional[str] = None
+    quantity_fulfilled: int = 0
+    distance_km: Optional[float] = None
+    eta_minutes: Optional[int] = None
+    created_at: datetime.datetime
+    resolved_at: Optional[datetime.datetime] = None
+    matched_donors: Optional[List[DonorFacilityMatch]] = None
+
+

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '../../services/api';
-import { Bot, Send, X, Sparkles, AlertCircle, Clock, ShieldCheck } from 'lucide-react';
+import { Bot, Send, X, Sparkles } from 'lucide-react';
 
 interface AICopilotModalProps {
   isOpen: boolean;
@@ -17,7 +17,7 @@ export const AICopilotModal: React.FC<AICopilotModalProps> = ({
   const [messages, setMessages] = useState<Array<{ sender: 'user' | 'ai'; text: string; time: string }>>([
     {
       sender: 'ai',
-      text: `Hello! I am **Gemini 3.6 AI Supply Chain Copilot**. I analyze real-time inventory balances, moving average consumption, weather signals, and expiry dates across facilities in **${country}** to provide grounded operational answers.\n\nHow can I assist your health logistics command today?`,
+      text: `Hello! I am your **Smart Medicine Assistant**. I check live medicine stock, expiring medicines, and daily clinic needs across **${country}** to provide simple, clear answers.\n\nHow can I help you today?`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -26,12 +26,12 @@ export const AICopilotModal: React.FC<AICopilotModalProps> = ({
   if (!isOpen) return null;
 
   const samplePrompts = [
-    "Which medicines are at highest stockout risk?",
+    "Which medicines are running low?",
     "Why is ORS demand increasing in Maharashtra?",
-    "Which facilities can donate surplus inventory?",
-    "Which stock is at immediate expiry risk?",
-    "What should we procure this month?",
-    "What happens if demand increases by 25%?"
+    "Which clinics have extra medicines to share?",
+    "Which medicines will expire soon?",
+    "What medicines should we order this month?",
+    "What happens if patient visits increase by 25%?"
   ];
 
   const handleSend = async (queryText?: string) => {
@@ -51,12 +51,12 @@ export const AICopilotModal: React.FC<AICopilotModalProps> = ({
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, aiMsg]);
-    } catch (e) {
+    } catch {
       setMessages(prev => [
         ...prev,
         {
           sender: 'ai',
-          text: "AI service temporarily unavailable. Operational data remains accessible directly on the dashboard.",
+          text: "The assistant is temporarily offline. You can view all live medicine data directly on your dashboard.",
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]);
@@ -66,64 +66,52 @@ export const AICopilotModal: React.FC<AICopilotModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="glass-panel w-full max-w-2xl border border-brand-500/40 shadow-2xl flex flex-col h-[620px] overflow-hidden relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[85vh]">
         {/* Header */}
-        <div className="p-4 bg-gradient-to-r from-slate-900 via-brand-950/40 to-slate-900 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-brand-600 to-emerald-500 flex items-center justify-center shadow-md shadow-brand-500/20">
-              <Bot className="w-5 h-5 text-white" />
+        <div className="p-4 bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-brand-500/20 border border-blue-200 dark:border-brand-500/30 flex items-center justify-center">
+              <Bot className="w-4 h-4 text-blue-600 dark:text-brand-400" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-bold text-white">TRACKMEDS AI Copilot</h3>
-                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1">
-                  <ShieldCheck className="w-3 h-3" />
-                  <span>Non-PHI Safety Grounded</span>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                <span>Smart Medicine Assistant (AI)</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-50 dark:bg-brand-500/10 text-blue-600 dark:text-brand-400 border border-blue-200 dark:border-brand-500/30 font-bold">
+                  Active • {country}
                 </span>
-              </div>
-              <p className="text-[11px] text-slate-400">Powered by Google Gemini 3.6 Flash</p>
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Instant answers about medicine stocks, shortages, and clinic transfers
+              </p>
             </div>
           </div>
-
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Chat History */}
-        <div className="flex-1 p-4 overflow-y-auto space-y-4">
-          {messages.map((msg, idx) => (
+        {/* Chat Stream */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[280px]">
+          {messages.map((msg, i) => (
             <div
-              key={idx}
-              className={`flex items-start space-x-2.5 ${
-                msg.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-              }`}
+              key={i}
+              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
+                className={`max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed ${
                   msg.sender === 'user'
-                    ? 'bg-slate-700 text-slate-200'
-                    : 'bg-brand-600/30 text-brand-300 border border-brand-500/40'
-                }`}
-              >
-                {msg.sender === 'user' ? 'U' : <Sparkles className="w-4 h-4 text-brand-400" />}
-              </div>
-
-              <div
-                className={`max-w-[82%] p-3.5 rounded-2xl text-xs leading-relaxed ${
-                  msg.sender === 'user'
-                    ? 'bg-brand-600 text-white rounded-tr-none shadow-md shadow-brand-600/20'
-                    : 'glass-card border-slate-700/80 text-slate-200 rounded-tl-none'
+                    ? 'bg-brand-600 text-white rounded-tr-none'
+                    : 'bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 rounded-tl-none'
                 }`}
               >
                 <div className="whitespace-pre-wrap">{msg.text}</div>
                 <div
                   className={`mt-1.5 text-[10px] text-right ${
-                    msg.sender === 'user' ? 'text-brand-200' : 'text-slate-500'
+                    msg.sender === 'user' ? 'text-brand-200' : 'text-slate-400 dark:text-slate-500'
                   }`}
                 >
                   {msg.time}
@@ -133,46 +121,46 @@ export const AICopilotModal: React.FC<AICopilotModalProps> = ({
           ))}
 
           {isLoading && (
-            <div className="flex items-center space-x-2 text-xs text-brand-400 p-2">
+            <div className="flex items-center space-x-2 text-xs text-blue-600 dark:text-brand-400 p-2">
               <Sparkles className="w-4 h-4 animate-spin" />
-              <span>Gemini analyzing logistics data & generating response...</span>
+              <span>Checking clinic inventory and records...</span>
             </div>
           )}
         </div>
 
         {/* Sample Prompt Chips */}
-        <div className="px-4 py-2 bg-slate-900/60 border-t border-slate-800/80 flex items-center space-x-2 overflow-x-auto">
-          <span className="text-[10px] font-semibold text-slate-500 uppercase shrink-0">Prompts:</span>
+        <div className="px-4 py-2 bg-slate-50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-800 flex items-center space-x-2 overflow-x-auto">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase shrink-0">Quick Questions:</span>
           {samplePrompts.slice(0, 3).map((prompt, i) => (
             <button
               key={i}
               onClick={() => handleSend(prompt)}
-              className="text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-750 text-slate-300 hover:text-white border border-slate-700/60 shrink-0 transition-colors"
+              className="text-[11px] px-2.5 py-1 rounded-full bg-slate-200/70 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700/60 shrink-0 transition-colors"
             >
               {prompt}
             </button>
           ))}
         </div>
 
-        {/* Question Input Form */}
+        {/* Input Form */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSend();
           }}
-          className="p-3 bg-slate-900 border-t border-slate-800 flex items-center space-x-2"
+          className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center space-x-2"
         >
           <input
             type="text"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Ask Gemini about medicine stockouts, expiry risk, or redistribution..."
-            className="flex-1 bg-slate-800/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"
+            placeholder="Ask any question about medicine stocks, shortages, or transfers..."
+            className="flex-1 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-brand-500"
           />
           <button
             type="submit"
             disabled={!question.trim() || isLoading}
-            className="p-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-medium shadow-md shadow-brand-600/30 transition-all disabled:opacity-40 shrink-0"
+            className="p-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-medium shadow-md transition-all disabled:opacity-40 shrink-0 cursor-pointer"
           >
             <Send className="w-4 h-4" />
           </button>

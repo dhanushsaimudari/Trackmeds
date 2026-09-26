@@ -23,15 +23,33 @@ export default {
         },
         brand: {
           50: '#F0F9FF',
+          400: '#38BDF8',
           500: '#0EA5E9',
           600: '#0284C7',
           700: '#0369A1',
+          950: '#072740',
+        },
+        brics: {
+          resilience: '#001F5B',
+          innovation: '#006CD4',
+          'innovation-cyan': '#00BCD4',
+          cooperation: '#00897B',
+          sustainability: '#2E7D32',
+          india: '#F97316',
+          china: '#EF4444',
+          sa: '#EAB308',
+          brazil: '#16A34A',
+          russia: '#2563EB',
+        },
+        surface: {
+          ground: '#F4F7FB',
+          card: '#FFFFFF',
         },
         health: {
-          success: '#10B981',
+          success: '#2E7D32',
           warning: '#F59E0B',
-          critical: '#EF4444',
-          info: '#3B82F6',
+          critical: '#DC2626',
+          info: '#006CD4',
         }
       },
       fontFamily: {
@@ -40,6 +58,25 @@ export default {
       },
       backdropBlur: {
         xs: '2px',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.25s ease-in-out forwards',
+        'slide-up': 'slideUp 0.3s ease-out forwards',
+        'pulse-subtle': 'pulseSubtle 2.5s infinite ease-in-out',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        pulseSubtle: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.7' },
+        }
       }
     },
   },
