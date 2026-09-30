@@ -102,7 +102,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ initialMode = 'register' }) 
         window.dispatchEvent(new Event('hashchange'));
       }
     } catch (err: any) {
-      setError(err.message || 'Google Sign-In was cancelled or failed.');
+      if (err?.code === 'auth/popup-blocked') {
+        setError('Popup blocked by browser. Please allow popups for this site in your address bar, or sign in using Email & Password below.');
+      } else {
+        setError(err.message || 'Google Sign-In was cancelled or failed.');
+      }
     } finally {
       setIsSubmitting(false);
     }
