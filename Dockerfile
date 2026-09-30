@@ -8,8 +8,16 @@ COPY frontend/package*.json ./
 RUN npm ci
 
 COPY frontend/ ./
-# Empty VITE_API_BASE_URL makes API requests default to same-origin /api
+# Build-time environment variables embedded into the static bundle
 ENV VITE_API_BASE_URL=""
+ENV VITE_GOOGLE_MAPS_API_KEY="AIzaSyBjAJK3n2OscEWHH7fBM6DTRjFTIihApPo"
+ENV VITE_FIREBASE_API_KEY="AIzaSyB2Fh2BiLZaDjjELIBpn8hLcbtlx-QLK4Q"
+ENV VITE_FIREBASE_AUTH_DOMAIN="trackmeds-india.firebaseapp.com"
+ENV VITE_FIREBASE_PROJECT_ID="trackmeds-india"
+ENV VITE_FIREBASE_STORAGE_BUCKET="trackmeds-india.firebasestorage.app"
+ENV VITE_FIREBASE_MESSAGING_SENDER_ID="859158037487"
+ENV VITE_FIREBASE_APP_ID="1:859158037487:web:2ab50fd22401cf25346c1a"
+
 RUN npm run build
 
 # =============================================================================

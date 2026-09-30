@@ -171,7 +171,10 @@ export const GoogleFacilityMap: React.FC<GoogleFacilityMapProps> = ({
   }, [selectedFacility]);
 
   // Demo key or user environment key
-  const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || '';
+  const apiKey = (
+    (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY ||
+    'AIzaSyBjAJK3n2OscEWHH7fBM6DTRjFTIihApPo'
+  ).trim();
 
   // Determine center & zoom based on selected facility or State & District
   const stateObj = ALL_INDIA_STATES.find(
