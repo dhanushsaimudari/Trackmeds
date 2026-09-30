@@ -85,9 +85,11 @@ app.include_router(abdm_router, prefix=settings.API_V1_STR)
 app.include_router(cold_chain_router, prefix=settings.API_V1_STR)
 
 
-@app.get("/")
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 @app.get("/api/health")
-def root_and_health():
+def api_health():
     return {
         "title": "TRACKMEDS Command Center API",
         "version": settings.VERSION,
@@ -95,3 +97,38 @@ def root_and_health():
         "status": "online",
         "environment": settings.ENVIRONMENT
     }
+
+# Check for production static frontend build (copied into static/ during Docker build)
+STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
+
+if os.path.exists(STATIC_DIR):
+    assets_dir = os.path.join(STATIC_DIR, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Don't intercept API endpoints
+        if full_path.startswith("api/") or full_path == "api":
+            return {"error": "API route not found"}
+        
+        file_path = os.path.join(STATIC_DIR, full_path)
+        if full_path and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        
+        # Fallback to index.html for Single Page Application client-side routing
+        index_path = os.path.join(STATIC_DIR, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        
+        return {"error": "Frontend build not found"}
+else:
+    @app.get("/")
+    def root():
+        return {
+            "title": "TRACKMEDS Command Center API",
+            "version": settings.VERSION,
+            "docs": "/api/docs",
+            "status": "online",
+            "environment": settings.ENVIRONMENT
+        }
