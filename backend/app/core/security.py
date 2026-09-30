@@ -66,18 +66,29 @@ def verify_firebase_id_token(id_token: str) -> Optional[dict]:
                 "firebase": True,
                 "role": decoded.get("role")
             }
-    except Exception:
-        pass
+    except Exception as e:
+        # If verification fails in production, reject immediately
+        if settings.ENVIRONMENT == "production":
+            return None
 
-    # If firebase-admin is not configured, safely decode payload and verify structure and expiration
+    # In strict production mode, NEVER allow unverified JWT claims
+    if settings.ENVIRONMENT == "production":
+        return None
+
+    # In local development only (and only if explicitly allowed and non-production):
+    # fallback to parse claims safely with logged security alert
     try:
         parts = id_token.split('.')
         if len(parts) == 3:
             payload_bytes = _b64_decode(parts[1])
             payload = json.loads(payload_bytes.decode('utf-8'))
             now_ts = datetime.datetime.now(datetime.timezone.utc).timestamp()
-            # If payload has firebase attributes or valid expiration
             if payload.get("exp") and payload["exp"] >= now_ts and ("user_id" in payload or "firebase" in payload):
+                import logging
+                logging.getLogger("security").warning(
+                    "DEV_MODE_SECURITY_ALERT: Parsing unverified Firebase token payload in development mode. "
+                    "In production, tokens MUST be cryptographically verified by Firebase Admin SDK."
+                )
                 return {
                     "sub": payload.get("user_id") or payload.get("sub"),
                     "email": payload.get("email"),

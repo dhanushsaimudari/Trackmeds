@@ -3,6 +3,7 @@ import { DashboardSummary, Facility, RedistributionItem } from '../types';
 import { api } from '../services/api';
 import { getSeedSummary } from '../services/mockData';
 import { FacilityMap } from '../components/maps/FacilityMap';
+import { FacilityResourceTelemetry } from '../components/FacilityResourceTelemetry';
 import { SmartStockIngestion } from '../components/SmartStockIngestion';
 import { formatCurrency } from '../utils/formatters';
 import {
@@ -104,6 +105,13 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
     } finally {
       setApprovingId(null);
     }
+  };
+
+  const handleFacilityUpdated = (updated: Facility) => {
+    setSelectedFacility(updated);
+    setFacilities(prev => prev.map(f => (f.id === updated.id ? updated : f)));
+    setToastMessage(`Updated ${updated.name} telemetry: ${updated.occupied_beds}/${updated.total_beds} beds occupied, ${updated.staffing_percentage}% staff on duty.`);
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   // Metrics customized for India Maharashtra Corridor or Federated Nodes
@@ -332,6 +340,17 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
           redistributions={redistributions}
         />
       </div>
+
+      {/* ========================================================================= */}
+      {/* SECTION B.2: FACILITY RESOURCE TELEMETRY (BEDS, STAFF, FOOTFALL)          */}
+      {/* ========================================================================= */}
+      {selectedFacility && (
+        <FacilityResourceTelemetry
+          facility={selectedFacility}
+          onFacilityUpdated={handleFacilityUpdated}
+          onClose={() => setSelectedFacility(null)}
+        />
+      )}
 
       {/* ========================================================================= */}
       {/* SECTION C: ACTION MATRIX & 1-CLICK DISPATCH TABLE                         */}

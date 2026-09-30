@@ -64,6 +64,19 @@ backend/.env.local
 *serviceAccount*.json
 service-account*.json
 *-firebase-adminsdk-*.json
+*.pem
+*.key
+*.cert
+*.p12
+
+# Logs & Debugging
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Root Lockfile (Keep frontend/package-lock.json, ignore accidental root lock)
+/package-lock.json
 
 # IDEs, System & OS Files
 .vscode/
@@ -75,3 +88,5 @@ Thumbs.db
 desktop.ini
 *.bak
 *.tmp
+.system_generated/
+

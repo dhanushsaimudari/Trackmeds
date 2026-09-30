@@ -219,6 +219,13 @@ TRACKMEDS is designed as a resilient, decoupled micro-architecture combining a h
   3. `gemini-1.5-flash`: Resilient standard fallback for regional networks.
   4. `Deterministic Clinical Copilot`: Offline algorithmic engine providing contextual, deterministic logistics answers without requiring any internet connection or cloud API keys.
 
+### 6.9. Facility Resource Telemetry: Bed Availability, Medical Personnel Attendance & Footfall Telemetry
+Directly fulfilling the national challenge mandate (**"real-time visibility into medicine stocks, bed availability, and medical personnel attendance across India's entire PHC network"**):
+- **Bed Availability Telemetry**: Tracks `total_beds`, `occupied_beds`, `emergency_beds`, and `icu_beds`. Computes dynamic occupancy rates and flags capacity stress (`>75% WARNING`, `>90% CRITICAL`). Provides atomic API updates via `PUT /api/facilities/{id}/beds`.
+- **Medical Personnel Attendance**: Tracks on-duty vs. required quotas for `doctors`, `nurses`, and `support_staff`. Automatically flags understaffed shifts (`<85% WARNING`, `<70% CRITICAL`) via `PUT /api/facilities/{id}/staff`.
+- **Patient Footfall & Surge Multiplying**: Compares `daily_footfall` to historical `baseline_footfall`. Surge multipliers (`>1.2x`) are directly fed as input features into the ML Demand Forecaster and Federated Learning model weights.
+- **Interactive Command UI**: Powered by `FacilityResourceTelemetry.tsx` on the Overview Dashboard, enabling rapid status updates and real-time visualization of facility operational resilience.
+
 ---
 
 ## 7. Comprehensive Database Schema & Data Models
@@ -328,6 +335,11 @@ erDiagram
 3. **Donor Facility Spoofing**: An unauthorized user attempting to approve an emergency transfer by pretending to be the donor facility is intercepted and blocked.
 4. **Double-Spend Prevention**: Re-approving an already executed redistribution order returns `400 Bad Request`.
 
+### 8.3. Cryptographic Signature Verification & Zero-Bypass Auth
+- **Strict Production JWT Verification**: Patched `backend/app/core/security.py` to ensure unverified JWT token payloads are unconditionally rejected (`401 Unauthorized`).
+- **Dual Verification Engine**: Supports high-speed backend HMAC-SHA256 tokens and Google Firebase Admin RSA public key verification.
+- **No Insecure Fallback**: Tokens without valid digital signatures cannot escalate privileges, preventing forged header attacks.
+
 ---
 
 ## 9. Empirical Verification: 42/42 Automated Tests Passing
@@ -369,6 +381,7 @@ All endpoints are hosted under prefix `/api` with interactive documentation at `
 | `/api/dashboard/stats` | `GET` | Authenticated | Query: `country`, `state`, `district` | `200 OK` |
 | `/api/facilities` | `GET` | Authenticated | Query: `country`, `state`, `district` | `200 OK` |
 | `/api/facilities/{id}/beds` | `PUT` | Assigned Facility | `BedUpdateSchema` | `200 OK` |
+| `/api/facilities/{id}/staff` | `PUT` | Assigned Facility | `StaffUpdateSchema` | `200 OK` |
 | `/api/inventory` | `GET` | Authenticated | Query: `facility_id`, `category` | `200 OK` |
 | `/api/inventory` | `POST` | Assigned Facility | `InventoryCreateSchema` | `201 Created` |
 | `/api/inventory/consume` | `POST` | Assigned Facility | `InventoryConsumeSchema` | `200 OK` |

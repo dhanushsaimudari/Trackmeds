@@ -295,6 +295,32 @@ export const api = {
     });
   },
 
+  async updateFacilityBeds(facilityId: string, data: { occupied_beds: number; total_beds?: number; emergency_beds?: number; icu_beds?: number }): Promise<Facility> {
+    const res = await fetchWithTimeout(`${API_BASE}/facilities/${encodeURIComponent(facilityId)}/beds`, {
+      method: 'PUT',
+      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to update beds' }));
+      throw new Error(err.detail || 'Failed to update bed availability');
+    }
+    return res.json();
+  },
+
+  async updateFacilityStaff(facilityId: string, data: { doctors_available: number; nurses_available: number; support_available: number; doctors_required?: number; nurses_required?: number; support_required?: number }): Promise<Facility> {
+    const res = await fetchWithTimeout(`${API_BASE}/facilities/${encodeURIComponent(facilityId)}/staff`, {
+      method: 'PUT',
+      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to update staff' }));
+      throw new Error(err.detail || 'Failed to update personnel attendance');
+    }
+    return res.json();
+  },
+
 
   async getInventory(params: {
     country?: string;

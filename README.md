@@ -222,7 +222,8 @@ The backend provides comprehensive OpenAPI / Swagger documentation at `http://lo
 | `/api/auth/me` | `GET` | Authenticated | Retrieve profile and assigned facility/district |
 | `/api/dashboard/stats` | `GET` | Authenticated | National/State/District KPI rollups and stock counts |
 | `/api/facilities` | `GET` | Authenticated | List health facilities filtered by geographic scope |
-| `/api/facilities/{id}/beds` | `PUT` | Assigned Facility | Update live bed occupancy and ICU capacity |
+| `/api/facilities/{id}/beds` | `PUT` | Assigned Facility | Update live bed occupancy, ICU, and emergency capacity |
+| `/api/facilities/{id}/staff` | `PUT` | Assigned Facility | Update medical personnel attendance (doctors, nurses, support) |
 | `/api/inventory` | `GET` | Authenticated | Retrieve batch-tracked medicine inventories |
 | `/api/inventory` | `POST` | Assigned Facility | Ingest new batch (triggers forecast recalculation) |
 | `/api/inventory/consume` | `POST` | Assigned Facility | FEFO consumption of earliest expiring batches |
